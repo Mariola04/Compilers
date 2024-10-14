@@ -89,8 +89,8 @@ $alpha($alpha | $digit)* { \s -> TokenId s }
 \".*\" { \s -> Token_String (read s)}
 
 -- comments
-"//" [^\n]* { \_ -> TokenComment }
-"/*" [^*]* "*" / "*" [^/]* "/" { \_ -> TokenComment }
+"//".* ;
+"/*"(\n|.)*"*/" ;
 
 {
     data Token
@@ -142,7 +142,6 @@ $alpha($alpha | $digit)* { \s -> TokenId s }
         | TokenDouble Double
         | TokenId String
         | Token_String String
-        | TokenComment
         deriving (Show)
 }
 
