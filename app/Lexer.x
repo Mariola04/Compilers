@@ -27,6 +27,8 @@ true { \_ -> TokenTrue }
 false { \_ -> TokenFalse }
 then { \_ -> TokenThen }
 when { \_ -> TokenWhen }
+do { \_ -> TokenDo }
+
 
 -- could be useful
 -- throw { \_ -> TokenThrow }
@@ -34,7 +36,6 @@ when { \_ -> TokenWhen }
 -- catch { \_ -> TokenCatch }
 -- finally { \_ -> TokenFinally }
 -- for { \_ -> TokenFor }
--- do { \_ -> TokenDo }
 -- continue { \_ -> TokenContinue }
 -- is { \_ -> TokenIs }
 -- as { \_ -> TokenAs }
@@ -137,6 +138,7 @@ $alpha($alpha | $digit)* { \s -> TokenId s }
         | TokenSemi
         | TokenComma
         | TokenDot
+        | TokenDo
         | TokenColon
         | TokenInt Int
         | TokenDouble Double

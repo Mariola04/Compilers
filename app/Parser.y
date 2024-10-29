@@ -1,0 +1,216 @@
+{
+module Parser where
+import Lexer
+
+}
+
+%name parser
+%tokentype { Token }
+%error { parseError }
+
+%token
+-- Reserved keywords
+val { TokenVal }
+var { TokenVar }
+if { TokenIf }
+else { TokenElse }
+while { TokenWhile }
+break { TokenBreak }
+return { TokenReturn }
+fun { TokenFun }
+true { TokenTrue }
+false { TokenFalse }
+then { TokenThen }
+when { TokenWhen }
+do { TokenDo }
+
+-- Operators
+'==' { TokenEq }
+'!=' { TokenNeq }
+'<' { TokenLt }
+'<=' { TokenLeq }
+'>' { TokenGt }
+'>=' { TokenGeq }
+'&&' { TokenAnd }
+'||' { TokenOr }
+'!' { TokenNot }
+'=' { TokenAssign }
+'+' { TokenPlus }
+'-' { TokenMinus }
+'*' { TokenMult }
+'/' { TokenDiv }
+'%' { TokenMod }
+'++' { TokenInc }
+'--' { TokenDec }
+'+=' { TokenPlusAssign }
+'-=' { TokenMinusAssign }
+'*=' { TokenMultAssign }
+'/=' { TokenDivAssign }
+'%=' { TokenModAssign }
+
+-- Punctuation
+'(' { TokenLParen }
+')' { TokenRParen }
+'{' { TokenLBrace }
+'}' { TokenRBrace }
+'[' { TokenLBracket }
+']' { TokenRBracket }
+';' { TokenSemi }
+',' { TokenComma }
+'.' { TokenDot }
+':' { TokenColon }
+
+-- Literals
+int { TokenInt $$ }
+double { TokenDouble $$ }
+identifier { TokenId $$ }
+stringContent { Token_String $$ }
+
+-- Precedences
+%left '||'
+%left '&&'
+%nonassoc '==' '!='
+%nonassoc '<' '<=' '>' '>='
+%left '+' '-'
+%left '*' '/'
+%left '%'
+
+%% -- Grammar
+
+Program
+  : TopLevelExprs { Begin $1 }
+
+TopLevelExprs
+  : TopLevelExpr { [$1] }
+  | TopLevelExprs TopLevelExpr { $1 ++ [$2] }
+
+TopLevelExpr
+  : FunDecl { TopLevelFunDecl $1 }
+  | VarDecl { TopLevelVarDecl $1 }
+  | Expr { Expression $1 }
+
+-- Declarations
+VarDecl
+  : var identifier '=' Expr { VarDeclaration $2 $4 }
+
+FunDecl
+  : fun identifier '(' ParamList ')' '=' Expr { FunDeclaration $2 $4 $7 }
+
+
+ParamList
+  : {- empty -} { [] }
+  | identifier { [$1] }
+  | ParamList ',' identifier { $1 ++ [$3] }
+
+-- Expressions
+Expr
+  : Expr '||' Expr { Op Or $1 $3 }
+  | Expr '&&' Expr { Op And $1 $3 }
+  | Expr '==' Expr { Op Eq $1 $3 }
+  | Expr '!=' Expr { Op Neq $1 $3 }
+  | Expr '<' Expr { Op Lt $1 $3 }
+  | Expr '<=' Expr { Op Leq $1 $3 }
+  | Expr '>' Expr { Op Gt $1 $3 }
+  | Expr '>=' Expr { Op Geq $1 $3 }
+  | Expr '+' Expr { Op Add $1 $3 }
+  | Expr '-' Expr { Op Sub $1 $3 }
+  | Expr '*' Expr { Op Mul $1 $3 }
+  | Expr '/' Expr { Op Div $1 $3 }
+  | Expr '%' Expr { Op Mod $1 $3 }
+  | '!' Expr { Not $2 }
+  | '-' Expr { Negative $2 }
+  | identifier '(' ArgList ')' { FuncCall $1 $3 }
+  | identifier { Var $1 }
+  | int { IntLit $1 }
+  | double { DoubleLit $1 }
+  | stringContent { StringLit $1 }
+  | true { BoolLit True }
+  | false { BoolLit False }
+  | '(' Expr ')' { $2 }
+  | if Expr then Expr { IfThen $2 $4 }
+  | if Expr then Expr else Expr { IfThenElse $2 $4 $6 }
+  | while Expr do Expr { While $2 $4 }
+  | return Expr { Return $2 }
+  | break { Break }
+
+
+ArgList
+  : {- empty -} { [] }
+  | Expr { [$1] }
+  | ArgList ',' Expr { $1 ++ [$3] }
+
+-- Control structures
+-- IfExpr
+--   : if Expr then Expr { IfThen $2 $4 }
+--   | if Expr then Expr else Expr { IfThenElse $2 $4 $6 }
+
+-- WhileExpr
+--   : while Expr do Expr { While $2 $4 }
+
+-- ReturnExpr
+--   : return Expr { Return $2 }
+
+-- BreakExpr
+--   : break { Break }
+ 
+ 
+ 
+-- Error Handling
+
+
+{
+data Program = Begin [TopLevelExpr]
+            deriving Show
+
+data TopLevelExpr = TopLevelFunDecl FunDecl
+                  | TopLevelVarDecl VarDecl
+                  | Expression Expr
+                  deriving Show
+
+data VarDecl = VarDeclaration String Expr
+          deriving Show
+
+
+data FunDecl = FunDeclaration String [String] Expr
+          deriving Show
+
+
+data Expr
+      = Op Op Expr Expr
+      | Not Expr
+      | Negative Expr
+      | FuncCall String [Expr]
+      | Var String
+      | IntLit Int
+      | DoubleLit Double
+      | StringLit String
+      | BoolLit Bool
+      | IfThen Expr Expr
+      | IfThenElse Expr Expr Expr
+      | While Expr Expr
+      | Return Expr
+      | Break
+      deriving Show
+
+data Op
+        = Or
+        | And
+        | Eq
+        | Neq
+        | Lt
+        | Leq
+        | Gt
+        | Geq
+        | Add
+        | Sub
+        | Mul
+        | Div
+        | Mod
+      deriving Show
+    
+
+
+parseError :: [Token] -> a
+parseError toks = error ("parse error at " ++ show toks)
+
+}

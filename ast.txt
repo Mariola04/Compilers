@@ -1,1 +1,0 @@
-[TokenVar,TokenId "i",TokenAssign,TokenInt 0,TokenWhile,TokenLParen,TokenId "i",TokenLt,TokenInt 5,TokenRParen,TokenLBrace,TokenId "println",TokenLParen,TokenId "i",TokenRParen,TokenId "i",TokenInc,TokenRBrace]
