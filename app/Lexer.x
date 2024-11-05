@@ -15,19 +15,22 @@ tokens :-
 $white+ ;  -- skip white space
 
 -- reserved kotlin keywords
-val { \_ -> TokenVal }
-var { \_ -> TokenVar }
-if { \_ -> TokenIf }
-else { \_ -> TokenElse }
-while { \_ -> TokenWhile }
-break { \_ -> TokenBreak }
-return { \_ -> TokenReturn }
-fun { \_ -> TokenFun }
-true { \_ -> TokenTrue }
-false { \_ -> TokenFalse }
-then { \_ -> TokenThen }
-when { \_ -> TokenWhen }
-do { \_ -> TokenDo }
+val                         { \_ -> TokenVal }
+var                         { \_ -> TokenVar }
+if                          { \_ -> TokenIf }
+else                        { \_ -> TokenElse }
+while                       { \_ -> TokenWhile }
+break                       { \_ -> TokenBreak }
+return                      { \_ -> TokenReturn }
+fun                         { \_ -> TokenFun }
+true                        { \_ -> TokenTrue }
+false                       { \_ -> TokenFalse }
+then                        { \_ -> TokenThen }
+when                        { \_ -> TokenWhen }
+do                          { \_ -> TokenDo }
+print                       { \_ -> TokenPrint }
+println                     { \_ -> TokenPrintLn }
+readln                      { \_ -> TokenReadLn }
 
 
 -- could be useful
@@ -46,52 +49,52 @@ do { \_ -> TokenDo }
 -- null { \_ -> TokenNull }
 
 -- operators
-"==" { \_ -> TokenEq }
-"!=" { \_ -> TokenNeq }
-"<" { \_ -> TokenLt }
-"<=" { \_ -> TokenLeq }
-">" { \_ -> TokenGt }
-">=" { \_ -> TokenGeq }
-"&&" { \_ -> TokenAnd }
-"||" { \_ -> TokenOr }
-"!" { \_ -> TokenNot }
-"=" { \_ -> TokenAssign }
-"+" { \_ -> TokenPlus }
-"-" { \_ -> TokenMinus }
-"*" { \_ -> TokenMult }
-"/" { \_ -> TokenDiv }
-"%" { \_ -> TokenMod }
-"++" { \_ -> TokenInc }
-"--" { \_ -> TokenDec }
-"+=" { \_ -> TokenPlusAssign }
-"-=" { \_ -> TokenMinusAssign }
-"*=" { \_ -> TokenMultAssign }
-"/=" { \_ -> TokenDivAssign }
-"%=" { \_ -> TokenModAssign }
+"=="                        { \_ -> TokenEq }
+"!="                        { \_ -> TokenNeq }
+"<"                         { \_ -> TokenLt }
+"<="                        { \_ -> TokenLeq }
+">"                         { \_ -> TokenGt }
+">="                        { \_ -> TokenGeq }
+"&&"                        { \_ -> TokenAnd }
+"||"                        { \_ -> TokenOr }
+"!"                         { \_ -> TokenNot }
+"="                         { \_ -> TokenAssign }
+"+"                         { \_ -> TokenPlus }
+"-"                         { \_ -> TokenMinus }
+"*"                         { \_ -> TokenMult }
+"/"                         { \_ -> TokenDiv }
+"%"                         { \_ -> TokenMod }
+"++"                        { \_ -> TokenInc }
+"--"                        { \_ -> TokenDec }
+"+="                        { \_ -> TokenPlusAssign }
+"-="                        { \_ -> TokenMinusAssign }
+"*="                        { \_ -> TokenMultAssign }
+"/="                        { \_ -> TokenDivAssign }
+"%="                        { \_ -> TokenModAssign }
 
 
 
 -- punctuation
-"(" { \_ -> TokenLParen }
-")" { \_ -> TokenRParen }
-"{" { \_ -> TokenLBrace }
-"}" { \_ -> TokenRBrace }
-"[" { \_ -> TokenLBracket }
-"]" { \_ -> TokenRBracket }
-";" { \_ -> TokenSemi }
-"," { \_ -> TokenComma }
-"." { \_ -> TokenDot }
-":" { \_ -> TokenColon }
+"("                         { \_ -> TokenLParen }
+")"                         { \_ -> TokenRParen }
+"{"                         { \_ -> TokenLBrace }
+"}"                         { \_ -> TokenRBrace }
+"["                         { \_ -> TokenLBracket }
+"]"                         { \_ -> TokenRBracket }
+";"                         { \_ -> TokenSemi }
+","                         { \_ -> TokenComma }
+"."                         { \_ -> TokenDot }
+":"                         { \_ -> TokenColon }
 
 -- literals
-$digit+ { \s -> TokenInt (read s) }
-$digit+"."$digit+ { \s -> TokenDouble (read s) }
-$alpha($alpha | $digit)* { \s -> TokenId s }
-\".*\" { \s -> Token_String (read s)}
+$digit+                     { \s -> TokenInt (read s) }
+$digit+"."$digit+           { \s -> TokenDouble (read s) }
+$alpha($alpha | $digit)*    { \s -> TokenId s }
+\".*\"                      { \s -> Token_String (read s)}
 
 -- comments
-"//".* ;
-"/*"(\n|.)*"*/" ;
+"//".*                      ;
+"/*"(\n|.)*"*/"             ;
 
 {
     data Token
@@ -139,12 +142,15 @@ $alpha($alpha | $digit)* { \s -> TokenId s }
         | TokenComma
         | TokenDot
         | TokenDo
+        | TokenPrint
+        | TokenPrintLn
+        | TokenReadLn
         | TokenColon
         | TokenInt Int
         | TokenDouble Double
         | TokenId String
         | Token_String String
-        deriving (Show)
+        deriving (Show, Eq, Read)
 }
 
 

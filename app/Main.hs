@@ -6,5 +6,8 @@ import Parser
 main :: IO ()
 main = do
   input <- getContents
-  let ast = parser (alexScanTokens input)
+  let tokens = alexScanTokens input
+  print tokens
+  let ast = parser tokens
   writeFile "ast.txt" $ show ast ++ "\n"
+  print ast

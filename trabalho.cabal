@@ -50,12 +50,12 @@ extra-doc-files:    CHANGELOG.md
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 -- extra-source-files:
 
-common warnings
+common warning
     ghc-options: -Wall
 
 executable trabalho
     -- Import common warning flags.
-    import:           warnings
+    import:           warning
 
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
@@ -67,12 +67,39 @@ executable trabalho
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.2.1,array
+    build-depends:    base ^>=4.17.2.1, array
 
-    build-tools-depends:         alex,happy
+    build-tool-depends: alex:alex, happy:happy
 
     -- Directories containing source files.
     hs-source-dirs:   app
 
     -- Base language which the package is written in.
-    default-language: Haskell2010
+    default-language: Haskell2010      
+
+-- REMOVE BELOW
+
+common shared-properties
+    default-language:   Haskell2010
+    build-depends:      base == 4.*, mtl >= 2.2.2
+    ghc-options:
+
+library
+    import:             shared-properties
+    exposed-modules:    Lexer, Parser
+    other-modules:      
+    build-depends:      base, containers, unordered-containers, QuickCheck, array, directory, hspec, mtl, text, process
+    hs-source-dirs:     app
+    default-language:   Haskell2010
+
+test-suite teste
+    import:             shared-properties
+    main-is:            Spec.hs
+    type:               exitcode-stdio-1.0
+    other-modules:      P2_ParserSpec, P1_LexerSpec, SpecHelper
+    other-extensions:   TemplateHaskell
+    hs-source-dirs:     test
+    build-tool-depends: alex:alex, happy:happy, hspec-discover:hspec-discover
+    build-depends:      base, containers, unordered-containers, QuickCheck, array, directory, hspec, hspec-discover, trabalho, mtl, text, process
+    default-language:   Haskell2010
+

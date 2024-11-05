@@ -1,0 +1,1 @@
+Begin [TopLevelFunDecl (FunDeclaration "fibonacciUsingRecursion" ["num"] (Return (IfThenElse (Op Leq (Var "num") (IntLit 1)) (Var "num") (Op Add (FuncCall "fibonacciUsingRecursion" [Op Sub (Var "num") (IntLit 1)]) (FuncCall "fibonacciUsingRecursion" [Op Sub (Var "num") (IntLit 2)])))))]
