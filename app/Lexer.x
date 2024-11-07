@@ -14,6 +14,11 @@ tokens :-
 
 $white+ ;  -- skip white space
 
+-- comments
+"//".*                                  ;
+"/*"(\n|.)*"*/"                         ;
+\/ \* ( ~\* | \* ~\/ | \** \n )* \* \/  ;
+
 -- reserved kotlin keywords
 val                         { \_ -> TokenVal }
 var                         { \_ -> TokenVar }
@@ -92,9 +97,6 @@ $digit+"."$digit+           { \s -> TokenDouble (read s) }
 $alpha($alpha | $digit)*    { \s -> TokenId s }
 \".*\"                      { \s -> Token_String (read s)}
 
--- comments
-"//".*                      ;
-"/*"(\n|.)*"*/"             ;
 
 {
     data Token

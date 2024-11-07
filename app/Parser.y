@@ -88,14 +88,28 @@ TopLevelExprs
   : TopLevelExpr                                    { [$1] }
   | TopLevelExprs TopLevelExpr                      { $1 ++ [$2] }
 
-TopLevelExpr                
+TopLevelExpr
   : FunDecl                                         { TopLevelFunDecl $1 }
   | VarDecl                                         { TopLevelVarDecl $1 }
+  | ValDecl                                         { TopLevelValDecl $1 }
   | Expr                                            { Expression $1 }
 
+
+OptType
+  : ':' Type                           { Just $2 }
+  |                                    { Nothing }
+
+Type
+  : identifier                         { TypeIdentifier $1 }
+
+
 -- Declarations               
-VarDecl               
-  : var identifier '=' Expr                         { VarDeclaration $2 $4 }
+VarDecl
+  : var identifier OptType '=' Expr    { VarDeclaration $2 $3 $5 }
+
+ValDecl
+  : val identifier OptType '=' Expr                 { ValDeclaration $2 $3 $5 }
+
 
 FunDecl
   : fun identifier '(' ParamList ')' '{' Expr '}'   { FunDeclaration $2 $4 $7 }
@@ -164,24 +178,31 @@ ArgList
 --   : break { Break }
  
  
- 
--- Error Handling
-
-
 {
 data Program = Begin [TopLevelExpr]
             deriving (Show, Eq, Read)
 
+
 data TopLevelExpr = TopLevelFunDecl FunDecl
                   | TopLevelVarDecl VarDecl
+                  | TopLevelValDecl ValDecl
                   | Expression Expr
-                  deriving (Show, Eq, Read)
+                deriving (Show, Eq, Read)
 
-data VarDecl = VarDeclaration String Expr
-          deriving (Show, Eq, Read)
+
+data VarDecl = VarDeclaration String (Maybe Type) Expr
+             deriving (Show, Eq, Read)
+
+
+data ValDecl = ValDeclaration String (Maybe Type) Expr
+             deriving (Show, Eq, Read)
 
 
 data FunDecl = FunDeclaration String [String] Expr
+          deriving (Show, Eq, Read)
+
+
+data Type = TypeIdentifier String
           deriving (Show, Eq, Read)
 
 
