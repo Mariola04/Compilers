@@ -1,1 +1,1 @@
-Begin [TopLevelValDecl (ValDeclaration "a" (Just (TypeIdentifier "Int")) (IntLit 5))]
+Begin [TopLevelValDecl (ValDeclaration "line" Nothing (FuncCall "readln" []))]

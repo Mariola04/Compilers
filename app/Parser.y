@@ -9,7 +9,8 @@ import Lexer
 %error { parseError }
 
 %token
--- Reserved keywords
+
+----------------- Reserved keywords ---------------
 val                                                 { TokenVal }
 var                                                 { TokenVar }
 if                                                  { TokenIf }
@@ -28,7 +29,7 @@ println                                             { TokenPrintLn }
 readln                                              { TokenReadLn }
 
 
--- Operators                            
+-------------------- Operators --------------------                            
 '=='                                                { TokenEq }
 '!='                                                { TokenNeq }
 '<'                                                 { TokenLt }
@@ -52,7 +53,7 @@ readln                                              { TokenReadLn }
 '/='                                                { TokenDivAssign }
 '%='                                                { TokenModAssign }
 
--- Punctuation                            
+-------------------- Punctuation -------------------                            
 '('                                                 { TokenLParen }
 ')'                                                 { TokenRParen }
 '{'                                                 { TokenLBrace }
@@ -64,13 +65,15 @@ readln                                              { TokenReadLn }
 '.'                                                 { TokenDot }
 ':'                                                 { TokenColon }
 
--- Literals                           
+
+--------------------- Literals ---------------------                           
 int                                                 { TokenInt $$ }
 double                                              { TokenDouble $$ }
 identifier                                          { TokenId $$ }
 stringContent                                       { Token_String $$ }
 
--- Precedences                
+
+-------------------- Precedences -------------------                
 %left '||'                
 %left '&&'                
 %nonassoc '==' '!='               
@@ -79,8 +82,9 @@ stringContent                                       { Token_String $$ }
 %left '*' '/'               
 %left '%'               
 
-%% -- Grammar               
 
+----------------------- Grammar -------------------               
+%%
 Program               
   : TopLevelExprs                                   { Begin $1 }
 
@@ -96,16 +100,16 @@ TopLevelExpr
 
 
 OptType
-  : ':' Type                           { Just $2 }
-  |                                    { Nothing }
-
-Type
-  : identifier                         { TypeIdentifier $1 }
-
-
--- Declarations               
-VarDecl
-  : var identifier OptType '=' Expr    { VarDeclaration $2 $3 $5 }
+  : ':' Type                                        { Just $2 }
+  |                                                 { Nothing }
+              
+Type              
+  : identifier                                      { TypeIdentifier $1 }
+              
+              
+------------------- Declarations ------------------                             
+VarDecl             
+  : var identifier OptType '=' Expr                 { VarDeclaration $2 $3 $5 }
 
 ValDecl
   : val identifier OptType '=' Expr                 { ValDeclaration $2 $3 $5 }
@@ -116,13 +120,16 @@ FunDecl
 
 
 ParamList
-  : {- empty -}                                     { [] }
+  :                                                 { [] }
   | identifier                                      { [$1] }
   | ParamList ',' identifier                        { $1 ++ [$3] }
 
--- Expressions
+
+-------------------- Expressions -----------------
 Expr
-  : Expr '||' Expr                                  { Op Or $1 $3 }
+  : '!' Expr                                        { Not $2 }
+  | '-' Expr                                        { Negative $2 }
+  | Expr '||' Expr                                  { Op Or $1 $3 }
   | Expr '&&' Expr                                  { Op And $1 $3 }
   | Expr '==' Expr                                  { Op Eq $1 $3 }
   | Expr '!=' Expr                                  { Op Neq $1 $3 }
@@ -135,18 +142,19 @@ Expr
   | Expr '*' Expr                                   { Op Mul $1 $3 }
   | Expr '/' Expr                                   { Op Div $1 $3 }
   | Expr '%' Expr                                   { Op Mod $1 $3 }
-  | '!' Expr                                        { Not $2 }
-  | '-' Expr                                        { Negative $2 }
-  | identifier '(' ArgList ')'                      { FuncCall $1 $3 }
-  | identifier '(' ')'                              { FuncCall $1 [] }
-  | identifier                                      { Var $1 }
-  | identifier '=' Expr                             { Assign $1 $3 }
   | int                                             { IntLit $1 }
   | double                                          { DoubleLit $1 }
   | stringContent                                   { StringLit $1 }
   | true                                            { BoolLit True }
   | false                                           { BoolLit False }
+  | identifier '(' ArgList ')'                      { FuncCall $1 $3 }
+  | identifier '(' ')'                              { FuncCall $1 [] }
+  | identifier                                      { Var $1 }
+  | identifier '=' Expr                             { Assign $1 $3 }
   | '(' Expr ')'                                    { $2 }
+  | print '(' Expr ')'                              { FuncCall "print" [$3] }
+  | println '(' Expr ')'                            { FuncCall "println" [$3] }
+  | readln '(' ')'                                  { FuncCall "readln" [] }
   | if Expr then Expr                               { IfThen $2 $4 }
   | if Expr '{' Expr '}'                            { IfThen $2 $4 }
   | if Expr '{' Expr '}' else '{' Expr '}'          { IfThenElse $2 $4 $8 }
@@ -154,30 +162,13 @@ Expr
   | while Expr do Expr                              { While $2 $4 }
   | return Expr                                     { Return $2 }
   | break                                           { Break }
-  | print '(' Expr ')'                              { FuncCall "print" [$3] }
-  | println '(' Expr ')'                            { FuncCall "println" [$3] }
-  | readln '(' ')'                                  { FuncCall "readln" [] }
 
 
 ArgList
   : Expr                                            { [$1] }
   | ArgList ',' Expr                                { $1 ++ [$3] }
-
--- Control structures
--- IfExpr
---   : if Expr then Expr { IfThen $2 $4 }
---   | if Expr then Expr else Expr { IfThenElse $2 $4 $6 }
-
--- WhileExpr
---   : while Expr do Expr { While $2 $4 }
-
--- ReturnExpr
---   : return Expr { Return $2 }
-
--- BreakExpr
---   : break { Break }
  
- 
+
 {
 data Program = Begin [TopLevelExpr]
             deriving (Show, Eq, Read)
@@ -240,7 +231,6 @@ data Op
         | Mod
       deriving (Show, Eq, Read)
     
-
 
 parseError :: [Token] -> a
 parseError toks = error ("parse error at " ++ show toks)
