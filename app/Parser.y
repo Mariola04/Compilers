@@ -83,7 +83,7 @@ stringContent                                       { Token_String $$ }
 %left '%'               
 
 
------------------------ Grammar -------------------               
+------------------- Grammar -------------------               
 %%
 Program               
   : TopLevelExprs                                   { Begin $1 }
@@ -114,10 +114,8 @@ VarDecl
 ValDecl
   : val identifier OptType '=' Expr                 { ValDeclaration $2 $3 $5 }
 
-
 FunDecl
   : fun identifier '(' ParamList ')' '{' Expr '}'   { FunDeclaration $2 $4 $7 }
-
 
 ParamList
   :                                                 { [] }

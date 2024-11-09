@@ -13,9 +13,12 @@ tokens :-
 
 $white+ ;
 
+
+---------------- comments ----------------
 "//".*                                  ;
 "/*"(\n|.)*"*/"                         ;
 \/ \* ( ~\* | \* ~\/ | \** \n )* \* \/  ;
+
 
 --------- reserved kotlin keywords ---------
 val                                     { \_ -> TokenVal }
@@ -34,7 +37,6 @@ do                                      { \_ -> TokenDo }
 print                                   { \_ -> TokenPrint }
 println                                 { \_ -> TokenPrintLn }
 readln                                  { \_ -> TokenReadLn }
-
 
 
 ---------------- operators ----------------            
@@ -60,7 +62,6 @@ readln                                  { \_ -> TokenReadLn }
 "*="                                    { \_ -> TokenMultAssign }
 "/="                                    { \_ -> TokenDivAssign }
 "%="                                    { \_ -> TokenModAssign }
-
 
 
 -------------- punctuation  ---------------         
