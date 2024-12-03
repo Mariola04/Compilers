@@ -23,11 +23,6 @@ cabal.project.local~
 .ghc.environment.*
 
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
@@ -35,3 +30,7 @@ cabal.project.local~
 # Built Visual Studio Code Extensions
 *.vsix
 test
+
+.idea/*
+
+app.zip
