@@ -135,6 +135,8 @@ StmtSeq
   | StmtSeq Stmt                                    { $1 ++ [$2] }
 
 -------------------- Statements -----------------
+
+-- Atençao as redundancias por exemplo if aqui
 Stmt
   : if Expr then Stmt                               { IfThen $2 $4 }
   | if Expr then Block                              { IfThen $2 (BlockStmt $4) }
@@ -254,6 +256,8 @@ data Expr
       | IfThenExpr Expr Expr
       | IfThenElseExpr Expr Expr Expr
     deriving (Show, Eq, Read)
+
+-- if repetido
 
 
 data Type = TypeIdentifier String

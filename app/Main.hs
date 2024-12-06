@@ -3,6 +3,7 @@ module Main where
 import Lexer
 import Parser
 import IntermediateCode
+import MachineCode
 import Control.Monad.State
 import qualified Data.Map as Map
 import Data.Map (Map)
@@ -14,10 +15,9 @@ main = do
     let ast = parser tokens
     --------
     let intermediateCode = evalState (generateCode ast) (Map.empty, (0,0))
-
+    let code =fst (transProgToCode intermediateCode)
 
     print intermediateCode -- Print the intermediate code
+    print ("---------------------------------MACHINE CODE BELOW------------------------------------------")
+    print code
 
-    -- let mipsCode = generateMIPS intermediateCode
-    -- writeFile "output.asm" mipsCode
-    -- putStrLn "MIPS code generated in output.asm"
