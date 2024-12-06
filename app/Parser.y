@@ -2,10 +2,6 @@
 module Parser where
 import Lexer
 
-
-
-
-
 }
 
 %name parser
@@ -122,36 +118,51 @@ ValDecl
   : val identifier OptType '=' Expr                 { ValDeclaration $2 $3 $5 }
 
 FunDecl
-  : fun identifier '(' ParamList ')' '{' Expr '}'   { FunDeclaration $2 $4 $7 }
+  : fun identifier '(' ParamList ')' Block          { FunDeclaration $2 $4 $6 }
 
 ParamList
   :                                                 { [] }
   | identifier                                      { [$1] }
   | ParamList ',' identifier                        { $1 ++ [$3] }
 
+-------------------- Blocks -------------------
+Block
+  : '{' StmtSeq '}'                                 { Block $2 }
+
+StmtSeq
+  :                                                 { [] }
+  | Stmt                                            { [$1] }
+  | StmtSeq Stmt                                    { $1 ++ [$2] }
+
 -------------------- Statements -----------------
 Stmt
-  : if Expr then Expr                               { IfThen $2 $4 }
-  | if Expr '{' Expr '}'                            { IfThen $2 $4 }
-  | if Expr '{' Expr '}' else '{' Expr '}'          { IfThenElse $2 $4 $8 }
-  | if Expr then Expr else Expr                     { IfThenElse $2 $4 $6 }
-  | while Expr do Expr                              { While $2 $4 }
+  : if Expr then Stmt                               { IfThen $2 $4 }
+  | if Expr then Block                              { IfThen $2 (BlockStmt $4) }
+  | if Expr then Stmt else Stmt                     { IfThenElse $2 $4 $6 }
+  | if Expr then Stmt else Block                    { IfThenElse $2 $4 (BlockStmt $6) }
+  | if Expr then Block else Stmt                    { IfThenElse $2 (BlockStmt $4) $6 }
+  | if Expr then Block else Block                   { IfThenElse $2 (BlockStmt $4) (BlockStmt $6) }
+  | while Expr Stmt                                 { While $2 $3 }
+  | while Expr Block                                { While $2 (BlockStmt $3) } 
+  | while Expr do Stmt                              { While $2 $4 }
+  | while Expr do Block                             { While $2 (BlockStmt $4) }
   | return Expr                                     { Return $2 }
   | break                                           { Break }
-  | print '(' Expr ')'                              { FuncCall "print" [$3] }
-  | println '(' Expr ')'                            { FuncCall "println" [$3] }
-  | readln '(' ')'                                  { FuncCall "readln" [] }
-  | FuncCall                                        { $1 }
-  | Assign                                          { $1 }
+  | Expr                                            { ExprStmt $1 }
+  | Block                                           { BlockStmt $1 }
+  | print Expr                                      { ExprStmt $2 }
+  | println Expr                                    { ExprStmt $2 }
 
 -------------------- Function Calls -----------------
-FuncCall
+FuncCallExpr
   : identifier '(' ArgList ')'                      { FuncCall $1 $3 }
   | identifier '(' ')'                              { FuncCall $1 [] }
 
 -------------------- Assignments -----------------
-Assign
+AssignExpr
   : identifier '=' Expr                             { Assign $1 $3 }
+
+  
 
 -------------------- Expressions -----------------
 Expr
@@ -170,8 +181,19 @@ Expr
   | Expr '*' Expr                                   { Op Mul $1 $3 }
   | Expr '/' Expr                                   { Op Div $1 $3 }
   | Expr '%' Expr                                   { Op Mod $1 $3 }
+  | '(' Expr ')'                                    { Parenthesis $2 }
+  | if Expr then Expr                               { IfThenExpr $2 $4 }
+  | if Expr '{' Expr '}'                            { IfThenExpr $2 $4 }
+  | if Expr '{' Expr '}' else '{' Expr '}'          { IfThenElseExpr $2 $4 $8 }
+  | if Expr then Expr else Expr                     { IfThenElseExpr $2 $4 $6 }
+  | FuncCallExpr                                    { $1 }
+  | AssignExpr                                      { $1 }
   | identifier                                      { Var $1 }
-  | '(' Expr ')'                                    { $2 }
+  | int                                             { IntVal $1 }
+  | double                                          { DoubleVal $1 }
+  | stringContent                                   { StringVal $1 }
+  | true                                            { BoolLit True }
+  | false                                           { BoolLit False }
 
 ArgList
   : Expr                                            { [$1] }
@@ -186,7 +208,7 @@ data Program = Begin [TopLevelExpr]
 data TopLevelExpr = TopLevelFunDecl FunDecl
                   | TopLevelVarDecl VarDecl
                   | TopLevelValDecl ValDecl
-                  | Statement Expr
+                  | Statement Stmt
                 deriving (Show, Eq, Read)
 
 
@@ -198,8 +220,40 @@ data ValDecl = ValDeclaration String (Maybe Type) Expr
              deriving (Show, Eq, Read)
 
 
-data FunDecl = FunDeclaration String [String] Expr
+data FunDecl = FunDeclaration String [String] Block
           deriving (Show, Eq, Read)
+
+
+data Block = Block [Stmt]
+          deriving (Show, Eq, Read)
+
+
+data Stmt
+    = IfThen Expr Stmt
+    | IfThenElse Expr Stmt Stmt
+    | While Expr Stmt
+    | Return Expr
+    | Break
+    | ExprStmt Expr
+    | BlockStmt Block
+    deriving (Show, Eq, Read)
+
+
+data Expr
+      = Op Op Expr Expr
+      | Not Expr
+      | Negative Expr
+      | FuncCall String [Expr]
+      | Assign String Expr
+      | Var String
+      | Parenthesis Expr
+      | IntVal Int
+      | DoubleVal Double
+      | StringVal String
+      | BoolLit Bool
+      | IfThenExpr Expr Expr
+      | IfThenElseExpr Expr Expr Expr
+    deriving (Show, Eq, Read)
 
 
 data Type = TypeIdentifier String
@@ -209,24 +263,6 @@ data Type = TypeIdentifier String
             | BoolType
           deriving (Show, Eq, Read)
 
-
-data Expr
-      = Op Op Expr Expr
-      | Not Expr
-      | Negative Expr
-      | FuncCall String [Expr]
-      | Var String
-      | Assign String Expr
-      | IntLit Int
-      | DoubleLit Double
-      | StringLit String
-      | BoolLit Bool
-      | IfThen Expr Expr
-      | IfThenElse Expr Expr Expr
-      | While Expr Expr
-      | Return Expr
-      | Break
-    deriving (Show, Eq, Read)
 
 data Op
         = Or

@@ -8,6 +8,7 @@
 $white = [\ \t\n\r\v\r]
 $digit = [0-9]
 $alpha = [_a-zA-Z]
+$strings = $printable # \"
 
 tokens :-
 
@@ -81,7 +82,7 @@ readln                                  { \_ -> TokenReadLn }
 $digit+                                 { \s -> TokenInt (read s) }
 $digit+"."$digit+                       { \s -> TokenDouble (read s) }
 $alpha($alpha | $digit)*                { \s -> TokenId s }
-\".*\"                                  { \s -> Token_String (read s)}
+\"$strings*\"                                { \s -> Token_String (read s)}
 
 
 {
