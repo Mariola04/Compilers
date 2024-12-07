@@ -155,7 +155,7 @@ Stmt
   | print Expr                                      { ExprStmt $2 }
   | println Expr                                    { ExprStmt $2 }
 
--------------------- Function Calls -----------------
+------------------- Function Calls ---------------
 FuncCallExpr
   : identifier '(' ArgList ')'                      { FuncCall $1 $3 }
   | identifier '(' ')'                              { FuncCall $1 [] }
@@ -165,7 +165,6 @@ AssignExpr
   : identifier '=' Expr                             { Assign $1 $3 }
 
   
-
 -------------------- Expressions -----------------
 Expr
   : '!' Expr                                        { Not $2 }
@@ -191,6 +190,8 @@ Expr
   | FuncCallExpr                                    { $1 }
   | AssignExpr                                      { $1 }
   | identifier                                      { Var $1 }
+  | identifier '++'                                 { Op Add (Var $1) (IntVal 1) }
+  | identifier '--'                                 { Op Sub (Var $1) (IntVal 1) }
   | int                                             { IntVal $1 }
   | double                                          { DoubleVal $1 }
   | stringContent                                   { StringVal $1 }

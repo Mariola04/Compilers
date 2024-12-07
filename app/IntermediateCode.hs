@@ -54,7 +54,10 @@ data Instr
   | CALL String String [String]
   | RETURN String
   | FUN String [String] [Instr]
+  | INC String               -- Increment operation
+  | DEC String               -- Decrement operation
   deriving (Show, Eq, Read)
+
 
 
 data BinOp = Add | Minus | Times | Div | Mod
@@ -184,6 +187,19 @@ generateExpr (P.FuncCall ident args) dest br = do
   (cargs, temps) <- generateExprs args br
   popTemp (length temps)
   return (cargs ++ [CALL dest ident temps])
+
+generateExpr (P.Op P.Add (P.Var ident) (P.IntVal 1)) dest br = do
+  table <- getTable
+  case Map.lookup ident table of
+    Just varName -> return [INC varName]
+    Nothing -> error ("Variable " ++ ident ++ " not declared")
+
+generateExpr (P.Op P.Sub (P.Var ident) (P.IntVal 1)) dest br = do
+  table <- getTable
+  case Map.lookup ident table of
+    Just varName -> return [DEC varName]
+    Nothing -> error ("Variable " ++ ident ++ " not declared")
+
 
 generateExpr (P.IfThenExpr cond expr) dest br = do
   lt <- newLabel

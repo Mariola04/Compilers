@@ -86,6 +86,22 @@ transToCode ((FUN l params ins):xs) c i ci g tabl ctabl =
       code = consecutiveCodeInserts c1 post
   in transToCode xs code i1 ci1 g1 m1 cm1
 
+
+-- INC d
+transToCode ((INC d):xs) c i ci g tabl ctabl =
+  let reg_d = giveMeRegister d tabl i
+      (i1, preC, reg_d') = translateMapping d (fst reg_d) (Map.insert d (snd reg_d) tabl)
+      code = consecutiveCodeInserts c [preC, "addi " ++ reg_d' ++ ", " ++ reg_d' ++ ", 1"]
+  in transToCode xs code i1 ci g (Map.insert d (snd reg_d) tabl) ctabl
+
+-- DEC d
+transToCode ((DEC d):xs) c i ci g tabl ctabl =
+  let reg_d = giveMeRegister d tabl i
+      (i1, preC, reg_d') = translateMapping d (fst reg_d) (Map.insert d (snd reg_d) tabl)
+      code = consecutiveCodeInserts c [preC, "addi " ++ reg_d' ++ ", " ++ reg_d' ++ ", -1"]
+  in transToCode xs code i1 ci g (Map.insert d (snd reg_d) tabl) ctabl
+
+
 {- Helper functions for each instruction kind -}
 
 moveInstr :: String -> String -> [Code] -> NextReg -> NextConst -> GVar -> Mappings -> MappingsConst
@@ -207,4 +223,3 @@ fst3 :: (a,b,c) -> a
 fst3 (x,_,_) = x
 
 ---
-
