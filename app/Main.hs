@@ -15,9 +15,9 @@ main = do
     let ast = parser tokens
     --------
     let intermediateCode = evalState (generateCode ast) (Map.empty, (0,0))
-    let code =fst (transProgToCode intermediateCode)
-
-    print intermediateCode -- Print the intermediate code
+    print intermediateCode
     print ("---------------------------------MACHINE CODE BELOW------------------------------------------")
+    let code =fst (transProgToCode intermediateCode)
     print code
+
 

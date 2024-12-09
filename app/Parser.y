@@ -1,7 +1,6 @@
 {
 module Parser where
 import Lexer
-
 }
 
 %name parser
@@ -11,67 +10,65 @@ import Lexer
 %token
 
 ----------------- Reserved keywords ---------------
-val                                                 { TokenVal }
-var                                                 { TokenVar }
-if                                                  { TokenIf }
-else                                                { TokenElse }
-while                                               { TokenWhile }
-break                                               { TokenBreak }
-return                                              { TokenReturn }
-fun                                                 { TokenFun }
-true                                                { TokenTrue }
-false                                               { TokenFalse }
-then                                                { TokenThen }
-when                                                { TokenWhen }
-do                                                  { TokenDo }
-print                                               { TokenPrint }
-println                                             { TokenPrintLn }
-readln                                              { TokenReadLn }
-
+val                                                             { TokenVal }
+var                                                             { TokenVar }
+if                                                              { TokenIf }
+else                                                            { TokenElse }
+while                                                           { TokenWhile }
+break                                                           { TokenBreak }
+return                                                          { TokenReturn }
+fun                                                             { TokenFun }
+main                                                            { TokenMain }
+true                                                            { TokenTrue }
+false                                                           { TokenFalse }
+then                                                            { TokenThen }
+when                                                            { TokenWhen }
+do                                                              { TokenDo }
+print                                                           { TokenPrint }
+println                                                         { TokenPrintLn }
+readln                                                          { TokenReadLn }
 
 -------------------- Operators --------------------
-'=='                                                { TokenEq }
-'!='                                                { TokenNeq }
-'<'                                                 { TokenLt }
-'<='                                                { TokenLeq }
-'>'                                                 { TokenGt }
-'>='                                                { TokenGeq }
-'&&'                                                { TokenAnd }
-'||'                                                { TokenOr }
-'!'                                                 { TokenNot }
-'='                                                 { TokenAssign }
-'+'                                                 { TokenPlus }
-'-'                                                 { TokenMinus }
-'*'                                                 { TokenMult }
-'/'                                                 { TokenDiv }
-'%'                                                 { TokenMod }
-'++'                                                { TokenInc }
-'--'                                                { TokenDec }
-'+='                                                { TokenPlusAssign }
-'-='                                                { TokenMinusAssign }
-'*='                                                { TokenMultAssign }
-'/='                                                { TokenDivAssign }
-'%='                                                { TokenModAssign }
+'=='                                                            { TokenEq }
+'!='                                                            { TokenNeq }
+'<'                                                             { TokenLt }
+'<='                                                            { TokenLeq }
+'>'                                                             { TokenGt }
+'>='                                                            { TokenGeq }
+'&&'                                                            { TokenAnd }
+'||'                                                            { TokenOr }
+'!'                                                             { TokenNot }
+'='                                                             { TokenAssign }
+'+'                                                             { TokenPlus }
+'-'                                                             { TokenMinus }
+'*'                                                             { TokenMult }
+'/'                                                             { TokenDiv }
+'%'                                                             { TokenMod }
+'++'                                                            { TokenInc }
+'--'                                                            { TokenDec }
+'+='                                                            { TokenPlusAssign }
+'-='                                                            { TokenMinusAssign }
+'*='                                                            { TokenMultAssign }
+'/='                                                            { TokenDivAssign }
+'%='                                                            { TokenModAssign }
 
 -------------------- Punctuation -------------------
-'('                                                 { TokenLParen }
-')'                                                 { TokenRParen }
-'{'                                                 { TokenLBrace }
-'}'                                                 { TokenRBrace }
-'['                                                 { TokenLBracket }
-']'                                                 { TokenRBracket }
-';'                                                 { TokenSemi }
-','                                                 { TokenComma }
-'.'                                                 { TokenDot }
-':'                                                 { TokenColon }
-
+'('                                                             { TokenLParen }
+')'                                                             { TokenRParen }
+'{'                                                             { TokenLBrace }
+'}'                                                             { TokenRBrace }
+'['                                                             { TokenLBracket }
+']'                                                             { TokenRBracket }
+';'                                                             { TokenSemi }
+','                                                             { TokenComma }
+'.'                                                             { TokenDot }
+':'                                                             { TokenColon }
 
 --------------------- Literals ---------------------
-int                                                 { TokenInt $$ }
-double                                              { TokenDouble $$ }
-identifier                                          { TokenId $$ }
-stringContent                                       { Token_String $$ }
-
+int                                                             { TokenInt $$ }
+double                                                          { TokenDouble $$ }
+identifier                                                      { TokenId $$ }
+stringContent                                                   { Token_String $$ }
 
 -------------------- Precedences -------------------
 %left '||'
@@ -82,80 +79,71 @@ stringContent                                       { Token_String $$ }
 %left '*' '/'
 %left '%'
 
-
 ------------------- Grammar -------------------
 %%
 Program
-  : TopLevelExprs                                   { Begin $1 }
+  : fun main '('')' '{' TopLevelExprs '}'                       { Begin $6 }
+
 
 TopLevelExprs
-  : TopLevelExpr                                    { [$1] }
-  | TopLevelExprs TopLevelExpr                      { $1 ++ [$2] }
+  : TopLevelExpr                                                { [$1] }
+  | TopLevelExprs TopLevelExpr                                  { $1 ++ [$2] }
 
 TopLevelExpr
-  : FunDecl                                         { TopLevelFunDecl $1 }
-  | VarDecl                                         { TopLevelVarDecl $1 }
-  | ValDecl                                         { TopLevelValDecl $1 }
-  | Stmt                                            { Statement $1 }
+  : FunDecl                                                     { TopLevelFunDecl $1 }
+  | Stmt                                                        { Statement $1 }
 
 OptType
-  : ':' Type                                        { Just $2 }
-  |                                                 { Nothing }
+  : ':' Type                                                    { Just $2 }
+  |                                                             { Nothing }
 
 Type
-  : identifier                                      { TypeIdentifier $1 }
-  | int                                             { IntType }
-  | double                                          { DoubleType }
-  | stringContent                                   { StringType }
-  | true                                            { BoolType }
-  | false                                           { BoolType }
+  : identifier                                                  { TypeIdentifier $1 }
+  | int                                                         { IntType }
+  | double                                                      { DoubleType }
+  | stringContent                                               { StringType }
+  | true                                                        { BoolType }
+  | false                                                       { BoolType }
 
 ------------------- Declarations ------------------
 VarDecl
-  : var identifier OptType '=' Expr                 { VarDeclaration $2 $3 $5 }
+  : var identifier OptType '=' Expr                             { VarDeclaration $2 $3 $5 }
 
 ValDecl
-  : val identifier OptType '=' Expr                 { ValDeclaration $2 $3 $5 }
+  : val identifier OptType '=' Expr                             { ValDeclaration $2 $3 $5 }
 
 FunDecl
-  : fun identifier '(' ParamList ')' Block          { FunDeclaration $2 $4 $6 }
+  : fun identifier '(' ParamList ')' '{' StmtSeq '}'            { FunDeclaration $2 $4 $7 }
+  | fun identifier '(' ParamList ')' '=' Stmt                   { FunDeclaration $2 $4 [$7] }
 
 ParamList
-  :                                                 { [] }
-  | identifier                                      { [$1] }
-  | ParamList ',' identifier                        { $1 ++ [$3] }
+  :                                                             { [] }
+  | identifier                                                  { [$1] }
+  | ParamList ',' identifier                                    { $1 ++ [$3] }
 
 -------------------- Blocks -------------------
-Block
-  : '{' StmtSeq '}'                                 { Block $2 }
 
 StmtSeq
-  :                                                 { [] }
-  | Stmt                                            { [$1] }
-  | StmtSeq Stmt                                    { $1 ++ [$2] }
+  :                                                             { [] }
+  | StmtSeq Stmt                                                { $1 ++ [$2] }
 
 -------------------- Statements -----------------
-
--- Atençao as redundancias por exemplo if aqui
 Stmt
-  : if Expr then Stmt                               { IfThen $2 $4 }
-  | if Expr then Block                              { IfThen $2 (BlockStmt $4) }
-  | if Expr then Stmt else Stmt                     { IfThenElse $2 $4 $6 }
-  | if Expr then Stmt else Block                    { IfThenElse $2 $4 (BlockStmt $6) }
-  | if Expr then Block else Stmt                    { IfThenElse $2 (BlockStmt $4) $6 }
-  | if Expr then Block else Block                   { IfThenElse $2 (BlockStmt $4) (BlockStmt $6) }
-  | while Expr Stmt                                 { While $2 $3 }
-  | while Expr Block                                { While $2 (BlockStmt $3) } 
-  | while Expr do Stmt                              { While $2 $4 }
-  | while Expr do Block                             { While $2 (BlockStmt $4) }
+  : if '(' Expr ')' Stmt                         { If $3 [$5] }
+  | if '(' Expr ')' '{' StmtSeq '}'                 { If $3 $6 }
+  | if '(' Expr ')' Stmt else Stmt            { IfElse $3 [$5] [$7] }
+  | if '(' Expr ')' '{' StmtSeq '}'else '{' StmtSeq '}'           { IfElse $3 $6 $10 }
+  | while '(' Expr ')' '{' StmtSeq '}'                             { While $3 $6 }
+  | while '(' Expr ')' do Stmt                           { While $3 [$6] }
   | return Expr                                     { Return $2 }
   | break                                           { Break }
   | Expr                                            { ExprStmt $1 }
-  | Block                                           { BlockStmt $1 }
   | print Expr                                      { ExprStmt $2 }
   | println Expr                                    { ExprStmt $2 }
+  | VarDecl                                         { TopLevelVarDecl $1 }
+  | ValDecl                                         { TopLevelValDecl $1 }
 
-------------------- Function Calls ---------------
+-------------------- Function Calls -----------------
 FuncCallExpr
   : identifier '(' ArgList ')'                      { FuncCall $1 $3 }
   | identifier '(' ')'                              { FuncCall $1 [] }
@@ -164,7 +152,6 @@ FuncCallExpr
 AssignExpr
   : identifier '=' Expr                             { Assign $1 $3 }
 
-  
 -------------------- Expressions -----------------
 Expr
   : '!' Expr                                        { Not $2 }
@@ -183,10 +170,7 @@ Expr
   | Expr '/' Expr                                   { Op Div $1 $3 }
   | Expr '%' Expr                                   { Op Mod $1 $3 }
   | '(' Expr ')'                                    { Parenthesis $2 }
-  | if Expr then Expr                               { IfThenExpr $2 $4 }
-  | if Expr '{' Expr '}'                            { IfThenExpr $2 $4 }
-  | if Expr '{' Expr '}' else '{' Expr '}'          { IfThenElseExpr $2 $4 $8 }
-  | if Expr then Expr else Expr                     { IfThenElseExpr $2 $4 $6 }
+--  | if Expr then Expr else Expr                     { IfElseExpr $2 $4 $6 }
   | FuncCallExpr                                    { $1 }
   | AssignExpr                                      { $1 }
   | identifier                                      { Var $1 }
@@ -202,45 +186,34 @@ ArgList
   : Expr                                            { [$1] }
   | ArgList ',' Expr                                { $1 ++ [$3] }
 
-
 {
 data Program = Begin [TopLevelExpr]
             deriving (Show, Eq, Read)
 
-
 data TopLevelExpr = TopLevelFunDecl FunDecl
-                  | TopLevelVarDecl VarDecl
-                  | TopLevelValDecl ValDecl
                   | Statement Stmt
                 deriving (Show, Eq, Read)
-
 
 data VarDecl = VarDeclaration String (Maybe Type) Expr
              deriving (Show, Eq, Read)
 
-
 data ValDecl = ValDeclaration String (Maybe Type) Expr
              deriving (Show, Eq, Read)
 
-
-data FunDecl = FunDeclaration String [String] Block
-          deriving (Show, Eq, Read)
-
-
-data Block = Block [Stmt]
+data FunDecl = FunDeclaration String [String]  [Stmt]
           deriving (Show, Eq, Read)
 
 
 data Stmt
-    = IfThen Expr Stmt
-    | IfThenElse Expr Stmt Stmt
-    | While Expr Stmt
+    = If Expr [Stmt]
+    | IfElse Expr [Stmt] [Stmt]
+    | While Expr [Stmt]
     | Return Expr
     | Break
     | ExprStmt Expr
-    | BlockStmt Block
+    | TopLevelVarDecl VarDecl
+    | TopLevelValDecl ValDecl
     deriving (Show, Eq, Read)
-
 
 data Expr
       = Op Op Expr Expr
@@ -254,12 +227,8 @@ data Expr
       | DoubleVal Double
       | StringVal String
       | BoolLit Bool
-      | IfThenExpr Expr Expr
-      | IfThenElseExpr Expr Expr Expr
+    --  | IfElseExpr Expr Expr Expr
     deriving (Show, Eq, Read)
-
--- if repetido
-
 
 data Type = TypeIdentifier String
             | IntType
@@ -267,7 +236,6 @@ data Type = TypeIdentifier String
             | StringType
             | BoolType
           deriving (Show, Eq, Read)
-
 
 data Op
         = Or
@@ -285,8 +253,6 @@ data Op
         | Mod
       deriving (Show, Eq, Read)
 
-
 parseError :: [Token] -> a
 parseError toks = error ("parse error at " ++ show toks)
-
 }

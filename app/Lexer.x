@@ -30,6 +30,7 @@ while                                   { \_ -> TokenWhile }
 break                                   { \_ -> TokenBreak }
 return                                  { \_ -> TokenReturn }
 fun                                     { \_ -> TokenFun }
+main                                    { \_ -> TokenMain }
 true                                    { \_ -> TokenTrue }
 false                                   { \_ -> TokenFalse }
 then                                    { \_ -> TokenThen }
@@ -95,6 +96,7 @@ $alpha($alpha | $digit)*                { \s -> TokenId s }
         | TokenBreak
         | TokenReturn
         | TokenFun
+        | TokenMain
         | TokenTrue
         | TokenFalse
         | TokenThen

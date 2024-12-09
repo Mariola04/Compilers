@@ -59,16 +59,14 @@ data Instr
   deriving (Show, Eq, Read)
 
 
-
 data BinOp = Add | Minus | Times | Div | Mod
   deriving (Eq, Show, Read)
 
 data RelOp = Less | LessEq | Greater | GreaterEq | Equals | NotEquals
   deriving (Eq, Show, Read)
 
--- TODO: TESTES!!!!!!!!!!!!!!! 
--- IMPLEMENTAR O WHEN???? 
--- print é para adicionar?? fun devia estar lá? NO INSTR????  ANDREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
+
 
 
 generateCode :: P.Program -> State CGState [Instr]
@@ -83,19 +81,19 @@ generateTopLevelExprs (x:xs) = do
 
 generateTopLevelExpr :: P.TopLevelExpr -> State CGState [Instr]
 generateTopLevelExpr (P.TopLevelFunDecl f) = generateFunDecl f
-generateTopLevelExpr (P.TopLevelVarDecl v) = generateVarDecl v
-generateTopLevelExpr (P.TopLevelValDecl v) = generateValDecl v
 generateTopLevelExpr (P.Statement s) = do
   dest <- newTemp
   code <- generateStmt s dest ""
   popTemp 1
   return code
+generateTopLevelExpr _ = do
+  error "Cannot find type"
 
 generateFunDecl :: P.FunDecl -> State CGState [Instr]
-generateFunDecl (P.FunDeclaration ident params block) = do
+generateFunDecl (P.FunDeclaration ident params stmts) = do
   dest <- newTemp
   _ <- generateParams params
-  code <- generateBlock block dest ""
+  code <- generateStmts stmts dest ""
   popTemp (length params + 1)
   return [FUN ident params (code ++ [RETURN dest])]
 
@@ -107,27 +105,6 @@ generateParams (p:ps) = do
   rest <- generateParams ps
   return (p:rest)
 
-generateVarDecl :: P.VarDecl -> State CGState [Instr]
-generateVarDecl (P.VarDeclaration ident _ expr) = do
-  temp <- newTemp
-  codeExpr <- generateExpr expr temp ""
-  table <- getTable
-  putTable (Map.insert ident ident table)
-  popTemp 1
-  return (codeExpr ++ [MOVE ident temp])
-
-generateValDecl :: P.ValDecl -> State CGState [Instr]
-generateValDecl (P.ValDeclaration ident _ expr) = do
-  temp <- newTemp
-  codeExpr <- generateExpr expr temp ""
-  table <- getTable
-  putTable (Map.insert ident ident table)
-  popTemp 1
-  return (codeExpr ++ [MOVE ident temp])
-
-generateBlock :: P.Block -> String -> Label -> State CGState [Instr]
-generateBlock (P.Block stmts) dest breakLabel = generateStmts stmts dest breakLabel
-
 generateStmts :: [P.Stmt] -> String -> Label -> State CGState [Instr]
 generateStmts [] _ _ = return []
 generateStmts (s:ss) d br = do
@@ -136,20 +113,20 @@ generateStmts (s:ss) d br = do
   return (c1 ++ c2)
 
 generateStmt :: P.Stmt -> String -> Label -> State CGState [Instr]
-generateStmt (P.IfThen cond stmt) dest br = do
+generateStmt (P.If cond stmt) dest br = do
   lt <- newLabel
   lf <- newLabel
   cc <- generateCond cond lt lf br
-  ct <- generateStmt stmt dest br
+  ct <- generateStmts stmt dest br
   return (cc ++ [LABEL lt] ++ ct ++ [LABEL lf])
 
-generateStmt (P.IfThenElse cond st f) dest br = do
+generateStmt (P.IfElse cond st f) dest br = do
   lt <- newLabel
   lf <- newLabel
   le <- newLabel
   cc <- generateCond cond lt lf br
-  ct <- generateStmt st dest br
-  cf <- generateStmt f dest br
+  ct <- generateStmts st dest br
+  cf <- generateStmts f dest br
   return (cc ++ [LABEL lt] ++ ct ++ [JUMP le, LABEL lf] ++ cf ++ [LABEL le])
 
 generateStmt (P.While cond stmt) dest _ = do
@@ -157,7 +134,7 @@ generateStmt (P.While cond stmt) dest _ = do
   lb <- newLabel
   le <- newLabel
   cc <- generateCond cond lb le le
-  cb <- generateStmt stmt dest le
+  cb <- generateStmts stmt dest le
   return ([LABEL lc] ++ cc ++ [LABEL lb] ++ cb ++ [JUMP lc, LABEL le])
 
 generateStmt (P.Return expr) dest br = do
@@ -167,7 +144,34 @@ generateStmt (P.Return expr) dest br = do
 generateStmt P.Break _ br = return [JUMP br]
 
 generateStmt (P.ExprStmt e) dest br = generateExpr e dest br
-generateStmt (P.BlockStmt b) dest br = generateBlock b dest br
+
+generateStmt (P.TopLevelVarDecl b) dest br = generateVarDecl b dest br
+
+generateStmt (P.TopLevelValDecl b) dest br = generateValDecl b dest br
+
+
+
+
+generateVarDecl :: P.VarDecl -> String -> Label -> State CGState [Instr]
+generateVarDecl (P.VarDeclaration ident _ expr) dest br = do
+  temp <- newTemp
+  codeExpr <- generateExpr expr temp ""
+  table <- getTable
+  putTable (Map.insert ident ident table)
+  popTemp 1
+  return (codeExpr ++ [MOVE ident temp])
+
+generateValDecl :: P.ValDecl -> String -> Label -> State CGState [Instr]
+generateValDecl (P.ValDeclaration ident _ expr) dest br = do
+  temp <- newTemp
+  codeExpr <- generateExpr expr temp ""
+  table <- getTable
+  putTable (Map.insert ident ident table)
+  popTemp 1
+  return (codeExpr ++ [MOVE ident temp])
+
+
+
 
 generateExpr :: P.Expr -> String -> Label -> State CGState [Instr]
 generateExpr (P.Var ident) dest _ = do
@@ -200,39 +204,41 @@ generateExpr (P.Op P.Sub (P.Var ident) (P.IntVal 1)) dest br = do
     Just varName -> return [DEC varName]
     Nothing -> error ("Variable " ++ ident ++ " not declared")
 
-
-generateExpr (P.IfThenExpr cond expr) dest br = do
-  lt <- newLabel
-  lf <- newLabel
-  le <- newLabel
-  cc <- generateCond cond lt lf br
-  ct <- generateExpr expr dest br
-  return (cc ++ [LABEL lt] ++ ct ++ [JUMP le, LABEL lf, LABEL le])
-
-generateExpr (P.IfThenElseExpr cond t f) dest br = do
-  lt <- newLabel
-  lf <- newLabel
-  le <- newLabel
-  cc <- generateCond cond lt lf br
-  ct <- generateExpr t dest br
-  cf <- generateExpr f dest br
-  return (cc ++ [LABEL lt] ++ ct ++ [JUMP le, LABEL lf] ++ cf ++ [LABEL le])
-
 generateExpr (P.Parenthesis e) dest br = generateExpr e dest br
+
 generateExpr (P.IntVal n) dest _ = return [MOVEI dest n]
+
 generateExpr (P.DoubleVal n) dest _ = return [MOVEI dest (round n)]
+
 generateExpr (P.StringVal s) dest _ = do
   lbl <- newLabel
   return [MOVES lbl s, MOVE dest lbl]
+
 generateExpr (P.BoolLit True) dest _ = return [MOVEI dest 1]
+
 generateExpr (P.BoolLit False) dest _ = return [MOVEI dest 0]
 
-generateExpr (P.Not e) dest br = do
-  lt <- newLabel
+generateExpr (P.Op P.And e1 e2) dest br = do
+  -- Logical AND
   lf <- newLabel
   le <- newLabel
-  cc <- generateCond (P.Not e) lt lf br
-  return (cc ++ [LABEL lt, MOVEI dest 1, JUMP le, LABEL lf, MOVEI dest 0, LABEL le])
+  c1 <- generateCond e1 le lf br -- Evaluate the first condition
+  c2 <- generateCond e2 dest lf br -- Evaluate the second condition if the first is true
+  return (c1 ++ [LABEL le] ++ c2 ++ [LABEL lf, MOVEI dest 0, LABEL le, MOVEI dest 1])
+
+generateExpr (P.Op P.Or e1 e2) dest br = do
+  -- Logical OR
+  lt <- newLabel
+  le <- newLabel
+  c1 <- generateCond e1 lt le br -- Evaluate the first condition
+  c2 <- generateCond e2 dest le br -- Evaluate the second condition if the first is false
+  return (c1 ++ [LABEL lt, MOVEI dest 1, JUMP le, LABEL le, MOVEI dest 0])
+
+generateExpr (P.Not e) dest br = do
+  t1 <- newTemp
+  condCode <- generateCond e dest t1 br
+  popTemp 1
+  return (condCode ++ [LABEL t1, MOVEI dest 0, JUMP br, LABEL dest, MOVEI dest 1])
 
 generateExpr (P.Negative e) dest br = do
   t1 <- newTemp
@@ -260,6 +266,8 @@ generateExpr (P.Op op e1 e2) dest br =
 
 generateExpr expr _ _ = error ("Expression not handled: " ++ show expr)
 
+
+
 generateExprs :: [P.Expr] -> Label -> State CGState ([Instr],[String])
 generateExprs [] _ = return ([], [])
 generateExprs (e:es) br = do
@@ -267,6 +275,8 @@ generateExprs (e:es) br = do
   c1 <- generateExpr e temp br
   (cr, ts) <- generateExprs es br
   return (c1 ++ cr, temp:ts)
+
+
 
 generateCond :: P.Expr -> Label -> Label -> Label -> State CGState [Instr]
 generateCond (P.Parenthesis e) lt lf br = generateCond e lt lf br
@@ -293,29 +303,48 @@ generateCond (P.Op op e1 e2) lt lf br =
       _ -> error ("Unsupported conditional operation: " ++ show op)
 
 generateCond (P.Not e) lt lf br = generateCond e lf lt br
+
 generateCond (P.BoolLit True) lt _ _ = return [JUMP lt]
+
 generateCond (P.BoolLit False) _ lf _ = return [JUMP lf]
+
 generateCond (P.Var ident) lt lf _ = do
   table <- getTable
   case Map.lookup ident table of
     Just varName -> return [COND varName NotEquals "0" lt lf]
     Nothing -> error ("Variable " ++ ident ++ " not declared")
-
+    
 generateCond expr _ _ _ = error ("Conditional expression not handled: " ++ show expr)
+
+
 
 opToBinOp :: P.Op -> Maybe BinOp
 opToBinOp P.Add = Just Add
+
 opToBinOp P.Sub = Just Minus
+
 opToBinOp P.Mul = Just Times
+
 opToBinOp P.Div = Just Div
+
 opToBinOp P.Mod = Just Mod
+
 opToBinOp _ = Nothing
 
+
+
 opToRelOp :: P.Op -> Maybe RelOp
+
 opToRelOp P.Eq = Just Equals
+
 opToRelOp P.Neq = Just NotEquals
+
 opToRelOp P.Lt = Just Less
+
 opToRelOp P.Leq = Just LessEq
+
 opToRelOp P.Gt = Just Greater
+
 opToRelOp P.Geq = Just GreaterEq
+
 opToRelOp _ = Nothing

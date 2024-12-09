@@ -19,7 +19,7 @@ data RegVal = REG String
 type Mappings = Map String RegVal
 type MappingsConst = Map String RegVal
 
--- The main function to translate a list of Instr to MIPS code
+
 transProgToCode :: [Instr] -> ([Code],[(String,RegVal)])
 transProgToCode xs =
   let (i, c, m, cm, ci, g) = transToCode xs [".text"] 0 0 0 Map.empty Map.empty
@@ -77,7 +77,6 @@ transToCode ((RETURN d):xs) c i ci g tabl ctabl =
       code = consecutiveCodeInserts c [preC, "move $v0, " ++ reg_d', "jr $ra"]
   in transToCode xs code i1 ci g (Map.insert d (snd reg_d) tabl) ctabl
 
-
 -- FUN l params code
 transToCode ((FUN l params ins):xs) c i ci g tabl ctabl =
   let pre = [l ++ ":", "sw $ra, 0($sp)", "sw $fp, -4($sp)", "move $fp, $sp", "addiu $sp, $sp, -32"]
@@ -85,7 +84,6 @@ transToCode ((FUN l params ins):xs) c i ci g tabl ctabl =
       (i1, c1, m1, cm1, ci1, g1) = transToCode ins (consecutiveCodeInserts c pre) i ci g tabl ctabl
       code = consecutiveCodeInserts c1 post
   in transToCode xs code i1 ci1 g1 m1 cm1
-
 
 -- INC d
 transToCode ((INC d):xs) c i ci g tabl ctabl =
@@ -124,6 +122,8 @@ moveIInstr d n c i ci g tabl ctabl =
       code = consecutiveCodeInserts c [preD, "li " ++ rd ++ ", " ++ show n]
   in (fst3 (translateMapping d (fst reg_d) tabl1), code, tabl1, ctabl, ci, g, code)
 
+
+
 opInstr :: BinOp -> String -> String -> String -> [Code] -> NextReg -> NextConst -> GVar -> Mappings -> MappingsConst
         -> (NextReg,[Code],Mappings,MappingsConst,NextConst,GVar,[Code])
 opInstr op d s1 s2 c i ci g tabl ctabl =
@@ -139,11 +139,13 @@ opInstr op d s1 s2 c i ci g tabl ctabl =
                  Minus -> "sub"
                  Times -> "mul"
                  Div -> "div"
-                 Mod -> "div" -- then mfhi
+                 Mod -> "div" 
       code = if op == Mod
              then consecutiveCodeInserts c [preD,preS1,preS2,mipsOp ++ " " ++ rs1 ++ ", " ++ rs2, "mfhi " ++ rd]
              else consecutiveCodeInserts c [preD,preS1,preS2,mipsOp ++ " " ++ rd ++ ", " ++ rs1 ++ ", " ++ rs2]
   in (fst3 (translateMapping s2 (fst3 (translateMapping s1 (fst3 (translateMapping d (fst reg_s2) tabl1)) tabl1)) tabl1), code, tabl1, ctabl, ci, g, code)
+
+
 
 condInstr :: String -> RelOp -> String -> Label -> Label -> [Code] -> NextReg -> NextConst -> GVar -> Mappings -> MappingsConst
           -> (NextReg,[Code],Mappings,MappingsConst,NextConst,GVar,[Code])
@@ -154,14 +156,16 @@ condInstr t1 rel t2 lt lf c i ci g tabl ctabl =
       (_, preT1, rt1) = translateMapping t1 (fst reg_t2) tabl1
       (_, preT2, rt2) = translateMapping t2 (fst3 (translateMapping t1 (fst reg_t2) tabl1)) tabl1
       branch = case rel of
-        Equals -> "beq " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt ++ "\nj " ++ lf
-        Less   -> "blt " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt ++ "\nj " ++ lf
-        LessEq -> "ble " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt ++ "\nj " ++ lf
-        Greater -> "bgt " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt ++ "\nj " ++ lf
-        GreaterEq -> "bge " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt ++ "\nj " ++ lf
-        NotEquals -> "bne " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt ++ "\nj " ++ lf
-      code = consecutiveCodeInserts c [preT1, preT2, branch]
+        Equals -> ["beq " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt, "j " ++ lf]
+        Less   -> ["blt " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt, "j " ++ lf]
+        LessEq -> ["ble " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt, "j " ++ lf]
+        Greater -> ["bgt " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt, "j " ++ lf]
+        GreaterEq -> ["bge " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt, "j " ++ lf]
+        NotEquals -> ["bne " ++ rt1 ++ ", " ++ rt2 ++ ", " ++ lt, "j " ++ lf]
+      code = consecutiveCodeInserts c [preT1, preT2] ++ branch
   in (fst3 (translateMapping t2 (fst3 (translateMapping t1 (fst reg_t2) tabl1)) tabl1), code, tabl1, ctabl, ci, g, code)
+
+
 
 callInstr :: String -> String -> [String] -> [Code] -> NextReg -> NextConst -> GVar -> Mappings -> MappingsConst
           -> (NextReg,[Code],Mappings,MappingsConst,NextConst,GVar,[Code])
